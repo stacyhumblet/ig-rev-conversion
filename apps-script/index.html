@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Revenue & Conversion Dashboard — Instagram</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Theme init (prevents flash) ───────────────────────── */
+    html { background: #000; }
+    html[data-theme="light"] { background: #fff5f9; }
+
+    /* ── Design tokens ─────────────────────────────────────── */
+    :root {
+      --bg:        #080e1c;
+      --surface:   rgba(255,255,255,.055);
+      --surface2:  rgba(255,255,255,.028);
+      --border:    rgba(255,255,255,.08);
+      --text:      #e7ecff;
+      --muted:     #a7b1d6;
+      --ig:        #e1306c;   /* Instagram pink-red */
+      --ig2:       #f77737;   /* Instagram orange */
+      --ig-dim:    rgba(225,48,108,.15);
+      --good:      #10b981;
+      --warn:      #f59e0b;
+      --bad:       #ef4444;
+      --accent:    #833ab4;   /* Instagram purple */
+    }
+    [data-theme="light"] {
+      --bg:        #fff5f9;
+      --surface:   rgba(255,255,255,.92);
+      --surface2:  rgba(255,255,255,.75);
+      --border:    rgba(225,48,108,.15);
+      --text:      #1a0a12;
+      --muted:     #7a4060;
+      --ig:        #c2185b;
+      --ig2:       #e65100;
+      --ig-dim:    rgba(194,24,91,.08);
+      --good:      #059669;
+      --warn:      #d97706;
+      --bad:       #dc2626;
+      --accent:    #6a1b9a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(1100px 600px at 10% 0%,  rgba(225,48,108,.14), transparent 55%),
+        radial-gradient(800px  500px at 90% 5%,  rgba(131,58,180,.10), transparent 50%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background .3s, color .2s;
+    }
+    [data-theme="light"] body {
+      background:
+        radial-gradient(1100px 600px at 10% 0%,  rgba(225,48,108,.06), transparent 55%),
+        radial-gradient(800px  500px at 90% 5%,  rgba(131,58,180,.04), transparent 50%),
+        var(--bg);
+    }
+
+    /* ── Top bar ───────────────────────────────────────────── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,14,28,.22);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      position: sticky; top: 0; z-index: 20;
+      gap: 12px; flex-wrap: wrap;
+    }
+    [data-theme="light"] .topbar {
+      background: rgba(255,245,249,.88);
+      border-bottom-color: rgba(225,48,108,.12);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-icon {
+      width: 32px; height: 32px; border-radius: 9px;
+      background: linear-gradient(135deg, #833ab4, #e1306c, #f77737);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+      box-shadow: 0 0 14px rgba(225,48,108,.4);
+    }
+    .brand-text { display: flex; flex-direction: column; }
+    .brand-title    { font-size: 16px; font-weight: 800; }
+    .brand-subtitle { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .topbar-right { display: flex; gap: 8px; align-items: center; }
+
+    /* ── Theme toggle ──────────────────────────────────────── */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-track {
+      width: 36px; height: 20px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      position: relative;
+      transition: background .2s;
+    }
+    [data-theme="light"] .toggle-track { background: rgba(225,48,108,.2); }
+    .toggle-thumb {
+      width: 14px; height: 14px;
+      background: var(--muted);
+      border-radius: 50%;
+      position: absolute;
+      top: 2px; left: 2px;
+      transition: transform .2s, background .2s;
+    }
+    [data-theme="light"] .toggle-thumb {
+      transform: translateX(16px);
+      background: var(--ig);
+    }
+
+    /* ── Layout ────────────────────────────────────────────── */
+    .container {
+      width: min(1340px, calc(100% - 32px));
+      margin: 20px auto 56px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.22);
+      transition: background .3s, border-color .2s;
+    }
+    [data-theme="light"] .card { box-shadow: 0 4px 18px rgba(225,48,108,.06); }
+    .card-title    { font-weight: 800; font-size: 14px; }
+    .card-subtitle { margin-top: 3px; color: var(--muted); font-size: 12px; }
+
+    /* ── Filters ───────────────────────────────────────────── */
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0,1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    @media (max-width: 900px) { .filters-grid { grid-template-columns: repeat(3,1fr); } }
+    @media (max-width: 560px) { .filters-grid { grid-template-columns: 1fr 1fr; } }
+
+    .field label {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    select {
+      width: 100%;
+      padding: 8px 28px 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a7b1d6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      cursor: pointer;
+      transition: background .3s, border-color .2s, color .2s;
+    }
+    select:focus { border-color: var(--ig); }
+    [data-theme="light"] select { background-color: rgba(255,255,255,.88); }
+
+    .reset-btn {
+      align-self: flex-end;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+      white-space: nowrap;
+    }
+    .reset-btn:hover { background: rgba(255,255,255,.08); color: var(--text); }
+    [data-theme="light"] .reset-btn { background: rgba(255,255,255,.7); }
+
+    /* ── KPI Pills ─────────────────────────────────────────── */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 1000px) { .kpi-row { grid-template-columns: repeat(3,1fr); } }
+    @media (max-width: 560px)  { .kpi-row { grid-template-columns: 1fr 1fr; } }
+
+    .kpi-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      transition: background .3s, border-color .2s;
+    }
+    .kpi-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .kpi-value { font-size: 22px; font-weight: 800; line-height: 1; color: var(--text); }
+    .kpi-sub   { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    .kpi-pill.ig    { border-color: rgba(225,48,108,.35); }
+    .kpi-pill.ig .kpi-value { color: var(--ig); }
+    .kpi-pill.good  .kpi-value { color: var(--good); }
+    .kpi-pill.warn  .kpi-value { color: var(--warn); }
+    .kpi-pill.bad   .kpi-value { color: var(--bad);  }
+    .kpi-pill.accent .kpi-value { color: var(--accent); }
+
+    /* ── Funnel row ────────────────────────────────────────── */
+    .funnel-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 700px) { .funnel-row { grid-template-columns: 1fr; } }
+
+    .funnel-step {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .funnel-step::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .funnel-step.s1::before { background: linear-gradient(90deg, #833ab4, #e1306c); }
+    .funnel-step.s2::before { background: linear-gradient(90deg, #e1306c, #f77737); }
+    .funnel-step.s3::before { background: linear-gradient(90deg, #f77737, #10b981); }
+
+    .funnel-label   { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .funnel-value   { font-size: 28px; font-weight: 800; line-height: 1; color: var(--text); }
+    .funnel-sub     { font-size: 11px; color: var(--muted); margin-top: 5px; }
+    .funnel-rate    { font-size: 13px; font-weight: 700; color: var(--ig); margin-top: 4px; }
+
+    /* ── Chart rows ────────────────────────────────────────── */
+    .chart-row { display: grid; gap: 14px; }
+    .chart-row-2-1 { grid-template-columns: 2fr 1fr; }
+    .chart-row-1-1 { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 860px) {
+      .chart-row-2-1, .chart-row-1-1 { grid-template-columns: 1fr; }
+    }
+    .chart-wrap    { position: relative; height: 260px; margin-top: 14px; }
+    .chart-wrap-sm { position: relative; height: 240px; margin-top: 14px; }
+
+    /* ── Loading ───────────────────────────────────────────── */
+    #loading {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 60vh; gap: 16px;
+      color: var(--muted); font-size: 14px;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(225,48,108,.15);
+      border-top-color: var(--ig);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #dashboard { display: none; }
+    #error-msg {
+      display: none;
+      background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
+      color: #fca5a5; padding: 16px 20px; border-radius: 12px;
+      font-size: 13px; margin: 20px 0;
+    }
+
+    /* ── Legend ────────────────────────────────────────────── */
+    .legend-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .legend-dot  { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ── IG gradient text ──────────────────────────────────── */
+    .ig-gradient {
+      background: linear-gradient(90deg, #833ab4, #e1306c, #f77737);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">📸</div>
+    <div class="brand-text">
+      <div class="brand-title">Revenue &amp; Conversion</div>
+      <div class="brand-subtitle">Traffic · Conversions · Revenue · Northwind Consulting</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark">
+      <span id="theme-label-dark">🌙</span>
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      <span id="theme-label-light">☀️</span>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="spinner"></div>
+  <span>Loading Instagram data…</span>
+</div>
+
+<!-- Error -->
+<div class="container"><div id="error-msg"></div></div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <div class="container">
+
+    <!-- Filters -->
+    <div class="card">
+      <div class="card-title">Filters</div>
+      <div class="filters-grid">
+        <div class="field">
+          <label>Year</label>
+          <select id="f-year" onchange="applyFilters()"><option value="">All Years</option></select>
+        </div>
+        <div class="field">
+          <label>Month</label>
+          <select id="f-month" onchange="applyFilters()"><option value="">All Months</option></select>
+        </div>
+        <div class="field">
+          <label>Campaign</label>
+          <select id="f-campaign" onchange="applyFilters()"><option value="">All Campaigns</option></select>
+        </div>
+        <div class="field">
+          <label>Content</label>
+          <select id="f-content" onchange="applyFilters()"><option value="">All Content</option></select>
+        </div>
+        <button class="reset-btn" onclick="resetFilters()">↺ Reset</button>
+      </div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="kpi-row">
+      <div class="kpi-pill ig">
+        <div class="kpi-label">Sessions</div>
+        <div class="kpi-value" id="kpi-sessions">—</div>
+        <div class="kpi-sub">From Instagram</div>
+      </div>
+      <div class="kpi-pill good">
+        <div class="kpi-label">Revenue</div>
+        <div class="kpi-value" id="kpi-revenue">—</div>
+        <div class="kpi-sub">IG-attributed</div>
+      </div>
+      <div class="kpi-pill">
+        <div class="kpi-label">Orders</div>
+        <div class="kpi-value" id="kpi-orders">—</div>
+        <div class="kpi-sub">Conversions</div>
+      </div>
+      <div class="kpi-pill accent">
+        <div class="kpi-label">Conv. Rate</div>
+        <div class="kpi-value" id="kpi-cvr">—</div>
+        <div class="kpi-sub">Sessions → Orders</div>
+      </div>
+      <div class="kpi-pill">
+        <div class="kpi-label">Avg Order Value</div>
+        <div class="kpi-value" id="kpi-aov">—</div>
+        <div class="kpi-sub">Revenue / orders</div>
+      </div>
+      <div class="kpi-pill" id="kpi-bounce-pill">
+        <div class="kpi-label">Bounce Rate</div>
+        <div class="kpi-value" id="kpi-bounce">—</div>
+        <div class="kpi-sub">% bounced</div>
+      </div>
+    </div>
+
+    <!-- Conversion Funnel -->
+    <div class="funnel-row">
+      <div class="funnel-step s1">
+        <div class="funnel-label">Sessions</div>
+        <div class="funnel-value" id="f-sessions">—</div>
+        <div class="funnel-sub">Visitors from Instagram</div>
+      </div>
+      <div class="funnel-step s2">
+        <div class="funnel-label">Orders</div>
+        <div class="funnel-value" id="f-orders">—</div>
+        <div class="funnel-sub">Completed purchases</div>
+        <div class="funnel-rate" id="f-cvr-label">—% conversion</div>
+      </div>
+      <div class="funnel-step s3">
+        <div class="funnel-label">Revenue</div>
+        <div class="funnel-value" id="f-revenue">—</div>
+        <div class="funnel-sub">IG-attributed</div>
+        <div class="funnel-rate" id="f-aov-label">— avg order</div>
+      </div>
+    </div>
+
+    <!-- Revenue Trend + Top Campaigns -->
+    <div class="chart-row chart-row-2-1">
+      <div class="card">
+        <div class="card-title">Revenue &amp; Sessions Trend</div>
+        <div class="card-subtitle">Monthly Instagram-attributed revenue vs. sessions</div>
+        <div class="legend-row">
+          <div class="legend-item"><div class="legend-dot" style="background:#e1306c"></div>Revenue</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#833ab4"></div>Sessions</div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Campaign Revenue</div>
+        <div class="card-subtitle">Top campaigns by revenue</div>
+        <div class="chart-wrap-sm"><canvas id="chart-campaigns"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Conversion by Campaign + Content Performance -->
+    <div class="chart-row chart-row-1-1">
+      <div class="card">
+        <div class="card-title">Conversion Rate by Campaign</div>
+        <div class="card-subtitle">Orders ÷ Sessions per campaign</div>
+        <div class="chart-wrap"><canvas id="chart-cvr"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Top Content by Sessions</div>
+        <div class="card-subtitle">UTM content driving most traffic</div>
+        <div class="chart-wrap"><canvas id="chart-content"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'ig-commerce-theme';
+
+// ── State ───────────────────────────────────────────────────────────────────────
+let allRows = [];
+let charts  = {};
+
+// ── Boot ────────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) _applyTheme(saved);
+
+  google.script.run
+    .withSuccessHandler(onData)
+    .withFailureHandler(onError)
+    .getIgCommerceData();
+});
+
+function onData(data) {
+  if (data.error) { onError(new Error(data.error)); return; }
+  allRows = data.rows || [];
+  populateFilters(data.fo);
+  render();
+  document.getElementById('loading').style.display   = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+}
+
+function onError(e) {
+  document.getElementById('loading').style.display = 'none';
+  const el = document.getElementById('error-msg');
+  el.style.display = 'block';
+  el.textContent = 'Error loading data: ' + (e.message || String(e));
+}
+
+// ── Filters ──────────────────────────────────────────────────────────────────────
+function populateFilters(fo) {
+  const add = (id, items) => {
+    const el = document.getElementById(id);
+    items.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value       = typeof item === 'object' ? item.value : item;
+      opt.textContent = typeof item === 'object' ? item.label : item;
+      el.appendChild(opt);
+    });
+  };
+  add('f-year',     fo.years);
+  add('f-month',    fo.months);
+  add('f-campaign', fo.campaigns);
+  add('f-content',  fo.contents);
+}
+
+function getFilters() {
+  return {
+    year:     document.getElementById('f-year').value,
+    month:    document.getElementById('f-month').value,
+    campaign: document.getElementById('f-campaign').value,
+    content:  document.getElementById('f-content').value,
+  };
+}
+
+function applyFilters() { render(); }
+
+function resetFilters() {
+  ['f-year','f-month','f-campaign','f-content'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  render();
+}
+
+function filteredRows() {
+  const f = getFilters();
+  return allRows.filter(r =>
+    (!f.year     || r.yr       === f.year)     &&
+    (!f.month    || r.mo       === f.month)    &&
+    (!f.campaign || r.campaign === f.campaign) &&
+    (!f.content  || r.content  === f.content)
+  );
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────────
+function render() {
+  const rows = filteredRows();
+
+  let totSessions = 0, totOrders = 0, totRevenue = 0, totBounces = 0;
+  rows.forEach(r => {
+    totSessions += r.sessions;
+    totOrders   += r.orders;
+    totRevenue  += r.revenue;
+    totBounces  += r.bounces;
+  });
+
+  const cvr        = totSessions > 0 ? (totOrders   / totSessions * 100) : 0;
+  const aov        = totOrders   > 0 ? (totRevenue  / totOrders)         : 0;
+  const bounceRate = totSessions > 0 ? (totBounces  / totSessions * 100) : 0;
+
+  // KPIs
+  document.getElementById('kpi-sessions').textContent = fmtN(totSessions);
+  document.getElementById('kpi-revenue').textContent  = fmt$(totRevenue);
+  document.getElementById('kpi-orders').textContent   = fmtN(totOrders);
+  document.getElementById('kpi-cvr').textContent      = cvr.toFixed(1) + '%';
+  document.getElementById('kpi-aov').textContent      = fmt$(aov);
+  document.getElementById('kpi-bounce').textContent   = bounceRate.toFixed(1) + '%';
+
+  // Color bounce pill
+  const bp = document.getElementById('kpi-bounce-pill');
+  bp.classList.remove('good','warn','bad');
+  if (bounceRate < 35)      bp.classList.add('good');
+  else if (bounceRate < 60) bp.classList.add('warn');
+  else                      bp.classList.add('bad');
+
+  // Funnel
+  document.getElementById('f-sessions').textContent  = fmtN(totSessions);
+  document.getElementById('f-orders').textContent    = fmtN(totOrders);
+  document.getElementById('f-revenue').textContent   = fmt$(totRevenue);
+  document.getElementById('f-cvr-label').textContent = cvr.toFixed(1) + '% conversion';
+  document.getElementById('f-aov-label').textContent = fmt$(aov) + ' avg order';
+
+  // ── Monthly trend ────────────────────────────────────────
+  const mMap = {};
+  rows.forEach(r => {
+    if (!r.mKey) return;
+    if (!mMap[r.mKey]) mMap[r.mKey] = { label: r.mLabel, rev: 0, sess: 0 };
+    mMap[r.mKey].rev  += r.revenue;
+    mMap[r.mKey].sess += r.sessions;
+  });
+  const sorted = Object.entries(mMap).sort(([a],[b]) => a.localeCompare(b));
+  renderChart('chart-trend', 'bar', sorted.map(([,v]) => v.label), [
+    { label: 'Revenue', data: sorted.map(([,v]) => +v.rev.toFixed(2)),
+      backgroundColor: 'rgba(225,48,108,.65)', borderColor: '#e1306c', borderWidth: 1.5, borderRadius: 4 },
+    { label: 'Sessions', data: sorted.map(([,v]) => v.sess),
+      type: 'line', borderColor: '#833ab4', backgroundColor: 'rgba(131,58,180,.1)',
+      borderWidth: 2, pointRadius: 3, tension: .35, fill: true, yAxisID: 'y2' },
+  ], { dualAxis: true, y1: 'Revenue ($)', y2: 'Sessions' });
+
+  // ── Top campaigns by revenue ─────────────────────────────
+  const campMap = {};
+  rows.forEach(r => {
+    if (r.campaign === '(none)') return;
+    if (!campMap[r.campaign]) campMap[r.campaign] = 0;
+    campMap[r.campaign] += r.revenue;
+  });
+  const campEntries = Object.entries(campMap).sort(([,a],[,b]) => b - a).slice(0, 8);
+  renderChart('chart-campaigns', 'bar', campEntries.map(([k]) => k), [
+    { label: 'Revenue', data: campEntries.map(([,v]) => +v.toFixed(2)),
+      backgroundColor: campEntries.map((_, i) => IG_PALETTE[i % IG_PALETTE.length]),
+      borderRadius: 4, borderSkipped: false }
+  ], { indexAxis: 'y', x: { title: 'Revenue ($)' } });
+
+  // ── Conversion rate by campaign ──────────────────────────
+  const cvrMap = {};
+  rows.forEach(r => {
+    if (r.campaign === '(none)') return;
+    if (!cvrMap[r.campaign]) cvrMap[r.campaign] = { orders: 0, sessions: 0 };
+    cvrMap[r.campaign].orders   += r.orders;
+    cvrMap[r.campaign].sessions += r.sessions;
+  });
+  const cvrEntries = Object.entries(cvrMap)
+    .map(([k, v]) => [k, v.sessions > 0 ? +(v.orders / v.sessions * 100).toFixed(2) : 0])
+    .sort(([,a],[,b]) => b - a).slice(0, 8);
+  renderChart('chart-cvr', 'bar', cvrEntries.map(([k]) => k), [
+    { label: 'Conv. Rate %', data: cvrEntries.map(([,v]) => v),
+      backgroundColor: 'rgba(131,58,180,.65)', borderColor: '#833ab4',
+      borderWidth: 1.5, borderRadius: 4, borderSkipped: false }
+  ], { indexAxis: 'y', x: { title: 'Conversion Rate (%)' } });
+
+  // ── Top content by sessions ──────────────────────────────
+  const contentMap = {};
+  rows.forEach(r => {
+    const key = r.content !== '(none)' ? r.content : (r.contentId || '(none)');
+    if (key === '(none)') return;
+    contentMap[key] = (contentMap[key] || 0) + r.sessions;
+  });
+  const contentEntries = Object.entries(contentMap).sort(([,a],[,b]) => b - a).slice(0, 8);
+  renderChart('chart-content', 'bar', contentEntries.map(([k]) => k), [
+    { label: 'Sessions', data: contentEntries.map(([,v]) => v),
+      backgroundColor: contentEntries.map((_, i) => IG_PALETTE[i % IG_PALETTE.length]),
+      borderRadius: 4, borderSkipped: false }
+  ], { indexAxis: 'y', x: { title: 'Sessions' }, integerValues: true });
+}
+
+
+// ── Chart helpers ───────────────────────────────────────────────────────────────
+const IG_PALETTE = [
+  '#e1306c','#833ab4','#f77737','#10b981','#5a9fc2',
+  '#fcaf45','#fd1d1d','#a78bfa','#34a08e','#f59e0b',
+];
+
+function renderChart(id, type, labels, datasets, opts = {}) {
+  const isDark    = document.documentElement.getAttribute('data-theme') !== 'light';
+  const textColor = isDark ? '#a7b1d6' : '#7a4060';
+  const gridColor = isDark ? 'rgba(255,255,255,.06)' : 'rgba(225,48,108,.08)';
+
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+
+  const ctx        = document.getElementById(id).getContext('2d');
+  const isDoughnut = type === 'doughnut';
+  const scaleBase  = { ticks: { color: textColor, font: { size: 11 } }, grid: { color: gridColor } };
+
+  let scales = {};
+  if (!isDoughnut) {
+    if (opts.dualAxis) {
+      scales = {
+        x:  { ...scaleBase },
+        y:  { ...scaleBase, beginAtZero: true, position: 'left',
+              title: { display: true, text: opts.y1 || '', color: textColor, font: { size: 11 } } },
+        y2: { ...scaleBase, beginAtZero: true, position: 'right',
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: opts.y2 || '', color: textColor, font: { size: 11 } } },
+      };
+      datasets[1] = { ...datasets[1], yAxisID: 'y2' };
+    } else if (opts.indexAxis === 'y') {
+      scales = {
+        x: { ...scaleBase, beginAtZero: true,
+             title: opts.x ? { display: true, text: opts.x.title, color: textColor, font: { size: 11 } } : undefined },
+        y: { ...scaleBase },
+      };
+    } else {
+      scales = {
+        x: { ...scaleBase },
+        y: { ...scaleBase, beginAtZero: true,
+             title: opts.y ? { display: true, text: opts.y.title, color: textColor, font: { size: 11 } } : undefined },
+      };
+    }
+  }
+
+  charts[id] = new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: opts.indexAxis || 'x',
+      plugins: {
+        legend: {
+          display: isDoughnut || (datasets.length > 1 && !opts.indexAxis),
+          position: isDoughnut ? 'right' : 'top',
+          labels: { color: textColor, font: { size: 11 }, boxWidth: 12, padding: 12 },
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const val = ctx.parsed.y ?? ctx.parsed.x ?? ctx.parsed;
+              if (opts.integerValues)    return ` ${Math.round(val).toLocaleString()} sessions`;
+              if (opts.x?.title?.includes('%')) return ` ${val}%`;
+              if (String(ctx.dataset.label).includes('Session')) return ` ${Math.round(val).toLocaleString()} sessions`;
+              return ` $${Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            },
+          },
+        },
+      },
+      scales: isDoughnut ? {} : scales,
+    },
+  });
+}
+
+
+// ── Theme ────────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  _applyTheme(current === 'light' ? 'dark' : 'light');
+}
+
+function _applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '');
+  localStorage.setItem(STORAGE_KEY, theme);
+  if (allRows.length > 0) render();
+}
+
+
+// ── Formatters ───────────────────────────────────────────────────────────────────
+function fmt$(n) {
+  if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(2) + 'M';
+  if (n >= 1_000)     return '$' + (n / 1_000).toFixed(1) + 'K';
+  return '$' + n.toFixed(2);
+}
+function fmtN(n) {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000)     return (n / 1_000).toFixed(1) + 'K';
+  return String(Math.round(n));
+}
+</script>
+</body>
+</html>
