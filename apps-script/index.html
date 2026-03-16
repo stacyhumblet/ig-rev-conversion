@@ -351,6 +351,67 @@
     .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
     .legend-dot  { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 
+    /* ── Settings panel ────────────────────────────────────── */
+    .settings-toggle {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; font-size: 13px; color: var(--muted); user-select: none;
+    }
+    .settings-toggle:hover { color: var(--text); }
+    .settings-toggle-arrow { font-size: 10px; transition: transform .2s; }
+    .settings-toggle-arrow.open { transform: rotate(90deg); }
+    .settings-grid {
+      display: none;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 14px; margin-top: 14px; padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .settings-grid.open { display: grid; }
+    @media (max-width: 860px) { .settings-grid { grid-template-columns: 1fr 1fr; } }
+    .settings-field label {
+      display: block; color: var(--muted); font-size: 10px; font-weight: 700;
+      letter-spacing: .5px; text-transform: uppercase; margin-bottom: 5px;
+    }
+    .settings-field input[type="number"] {
+      width: 100%; padding: 8px 10px; border-radius: 10px;
+      border: 1px solid var(--border); background: rgba(0,0,0,.22);
+      color: var(--text); font-size: 13px; outline: none;
+    }
+    .settings-field input[type="number"]:focus { border-color: var(--ig); }
+    [data-theme="light"] .settings-field input[type="number"] { background: rgba(255,255,255,.88); }
+    .settings-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .slider-wrap { display: flex; align-items: center; gap: 10px; }
+    .slider-wrap input[type="range"] { flex: 1; accent-color: var(--ig); cursor: pointer; }
+    .slider-val { font-size: 13px; font-weight: 700; color: var(--text); min-width: 38px; text-align: right; }
+
+    /* ── Target bar ─────────────────────────────────────────── */
+    .target-bar-wrap { margin-top: 8px; display: none; }
+    .target-bar-wrap.visible { display: block; }
+    .target-bar-track { height: 4px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; }
+    .target-bar-fill  { height: 100%; border-radius: 99px; background: var(--ig); transition: width .4s ease; }
+    .target-bar-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Pace badges ────────────────────────────────────────── */
+    .pace-badge { display: none; font-size: 10px; font-weight: 700; letter-spacing: .4px; padding: 2px 8px; border-radius: 99px; margin-top: 6px; width: fit-content; }
+    .pace-badge.visible { display: inline-block; }
+    .pace-ahead    { background: rgba(16,185,129,.18);  color: var(--good);    }
+    .pace-on-track { background: rgba(225,48,108,.18);  color: var(--ig);      }
+    .pace-watch    { background: rgba(245,158,11,.18);  color: var(--warn);    }
+    .pace-behind   { background: rgba(239,68,68,.18);   color: var(--bad);     }
+
+    /* ── Forecast card ──────────────────────────────────────── */
+    #forecast-card { display: none; }
+    #forecast-card.visible { display: block; }
+    .forecast-body { display: flex; align-items: flex-start; gap: 24px; margin-top: 12px; flex-wrap: wrap; }
+    .forecast-projected { flex-shrink: 0; }
+    .forecast-projected-label { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .forecast-projected-value { font-size: 28px; font-weight: 800; color: var(--accent); line-height: 1; }
+    .forecast-projected-sub   { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .forecast-sentence { font-size: 14px; line-height: 1.6; color: var(--text); flex: 1; min-width: 220px; padding-top: 2px; }
+    .forecast-meta     { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Section label ──────────────────────────────────────── */
+    .section-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); padding: 4px 0 2px; }
+
     /* ── IG gradient text ──────────────────────────────────── */
     .ig-gradient {
       background: linear-gradient(90deg, #833ab4, #e1306c, #f77737);
@@ -467,17 +528,62 @@
       </div>
     </div>
 
+    <!-- Goals, Targets & Assumptions -->
+    <div class="card">
+      <div class="settings-toggle" onclick="toggleSettings()">
+        <span class="settings-toggle-arrow" id="settings-arrow">▶</span>
+        <span>🎯 Goals, Targets &amp; Assumptions</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:4px">— set goals; pace indicators update automatically</span>
+      </div>
+      <div class="settings-grid" id="settings-panel">
+        <div class="settings-field">
+          <label>Timeframe</label>
+          <select id="s-timeframe" onchange="saveSettings(); render()" style="width:100%;padding:8px 28px 8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(14,22,52,.92);color:var(--text);font-size:13px;outline:none;appearance:none;color-scheme:dark;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a7b1d6'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;cursor:pointer;">
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="annual">Annual</option>
+          </select>
+          <div class="settings-hint">Applies to all goal attainment &amp; pace</div>
+        </div>
+        <div class="settings-field">
+          <label>Revenue Target ($)</label>
+          <input type="number" id="s-revenue-target" placeholder="e.g. 25000" min="0" oninput="saveSettings(); render()">
+          <div class="settings-hint">Shows attainment % and pace on Revenue KPI</div>
+        </div>
+        <div class="settings-field">
+          <label>Sessions Target (#)</label>
+          <input type="number" id="s-sessions-target" placeholder="e.g. 5000" min="0" oninput="saveSettings(); render()">
+          <div class="settings-hint">Optional — shows goal bar on Sessions KPI</div>
+        </div>
+        <div class="settings-field">
+          <label>Conv. Rate Target (%)</label>
+          <input type="number" id="s-cvr-target" placeholder="e.g. 3.5" min="0" step="0.1" oninput="saveSettings(); render()">
+          <div class="settings-hint">Optional — shows pace badge on CVR KPI</div>
+        </div>
+      </div>
+    </div>
+
     <!-- KPI Row -->
     <div class="kpi-row">
       <div class="kpi-pill ig">
         <div class="kpi-label">Sessions</div>
         <div class="kpi-value" id="kpi-sessions">—</div>
         <div class="kpi-sub">From Instagram</div>
+        <div class="target-bar-wrap" id="sessions-bar-wrap">
+          <div class="target-bar-track"><div class="target-bar-fill" id="sessions-bar-fill"></div></div>
+          <div class="target-bar-label" id="sessions-bar-label"></div>
+        </div>
+        <div class="pace-badge" id="pace-sessions"></div>
       </div>
       <div class="kpi-pill good">
         <div class="kpi-label">Revenue</div>
         <div class="kpi-value" id="kpi-revenue">—</div>
         <div class="kpi-sub">IG-attributed</div>
+        <div class="target-bar-wrap" id="revenue-bar-wrap">
+          <div class="target-bar-track"><div class="target-bar-fill" id="revenue-bar-fill"></div></div>
+          <div class="target-bar-label" id="revenue-bar-label"></div>
+        </div>
+        <div class="pace-badge" id="pace-revenue"></div>
       </div>
       <div class="kpi-pill">
         <div class="kpi-label">Orders</div>
@@ -488,6 +594,7 @@
         <div class="kpi-label">Conv. Rate</div>
         <div class="kpi-value" id="kpi-cvr">—</div>
         <div class="kpi-sub">Sessions → Orders</div>
+        <div class="pace-badge" id="pace-cvr"></div>
       </div>
       <div class="kpi-pill">
         <div class="kpi-label">Avg Order Value</div>
@@ -522,6 +629,22 @@
       </div>
     </div>
 
+    <!-- Forecast Card -->
+    <div class="section-label">Revenue Forecast</div>
+    <div class="card" id="forecast-card">
+      <div class="forecast-body">
+        <div class="forecast-projected">
+          <div class="forecast-projected-label">Projected End-of-Period Revenue</div>
+          <div class="forecast-projected-value" id="forecast-projected-value">—</div>
+          <div class="forecast-projected-sub" id="forecast-projected-sub"></div>
+        </div>
+        <div>
+          <div class="forecast-sentence" id="forecast-sentence">—</div>
+          <div class="forecast-meta" id="forecast-meta"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Revenue Trend + Top Campaigns -->
     <div class="chart-row chart-row-2-1">
       <div class="card">
@@ -530,6 +653,7 @@
         <div class="legend-row">
           <div class="legend-item"><div class="legend-dot" id="legend-revenue" style="background:#e1306c"></div>Revenue</div>
           <div class="legend-item"><div class="legend-dot" id="legend-sessions" style="background:#833ab4"></div>Sessions</div>
+          <div class="legend-item"><div class="legend-dot" style="background:transparent;width:18px;height:0;border-radius:0;border-bottom:2px dashed #f59e0b"></div>Projected</div>
         </div>
         <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
       </div>
@@ -561,6 +685,80 @@
 // ── Config ──────────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'ig-commerce-theme';
 
+// ── Settings ─────────────────────────────────────────────────────────────────────
+function loadSettings() {
+  document.getElementById('s-timeframe').value      = localStorage.getItem('ig-timeframe')       || 'monthly';
+  document.getElementById('s-revenue-target').value = localStorage.getItem('ig-revenue-target')  || '';
+  document.getElementById('s-sessions-target').value= localStorage.getItem('ig-sessions-target') || '';
+  document.getElementById('s-cvr-target').value     = localStorage.getItem('ig-cvr-target')      || '';
+}
+function saveSettings() {
+  localStorage.setItem('ig-timeframe',        document.getElementById('s-timeframe').value);
+  localStorage.setItem('ig-revenue-target',   document.getElementById('s-revenue-target').value);
+  localStorage.setItem('ig-sessions-target',  document.getElementById('s-sessions-target').value);
+  localStorage.setItem('ig-cvr-target',       document.getElementById('s-cvr-target').value);
+}
+function getSettings() {
+  return {
+    timeframe:      document.getElementById('s-timeframe').value       || 'monthly',
+    revenueTarget:  parseFloat(document.getElementById('s-revenue-target').value)  || 0,
+    sessionsTarget: parseFloat(document.getElementById('s-sessions-target').value) || 0,
+    cvrTarget:      parseFloat(document.getElementById('s-cvr-target').value)      || 0,
+  };
+}
+function toggleSettings() {
+  const panel = document.getElementById('settings-panel');
+  const arrow = document.getElementById('settings-arrow');
+  const open  = panel.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+}
+
+// ── Pace & Forecast helpers ───────────────────────────────────────────────────────
+const MONTH_NAMES_JS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function paceStatus(current, target) {
+  if (!target || target <= 0) return null;
+  const pct = current / target * 100;
+  if (pct >= 105) return { text: '▲ Ahead',    cls: 'pace-ahead'    };
+  if (pct >= 85)  return { text: '✓ On Track',  cls: 'pace-on-track' };
+  if (pct >= 60)  return { text: '⚠ Watch',     cls: 'pace-watch'    };
+  return           { text: '↓ Behind',  cls: 'pace-behind'   };
+}
+function setPaceBadge(badgeId, current, target) {
+  const el = document.getElementById(badgeId);
+  el.className = 'pace-badge';
+  const ps = paceStatus(current, target);
+  if (!ps) return;
+  el.textContent = ps.text;
+  el.classList.add(ps.cls, 'visible');
+}
+function linearForecast(sorted) {
+  const n = Math.min(sorted.length, 6);
+  if (n < 2) return null;
+  const pts = sorted.slice(-n).map(([k, v], i) => ({ x: i, y: v.rev, mKey: k, mLabel: v.label }));
+  const sumX  = pts.reduce((s, p) => s + p.x, 0);
+  const sumY  = pts.reduce((s, p) => s + p.y, 0);
+  const sumXY = pts.reduce((s, p) => s + p.x * p.y, 0);
+  const sumX2 = pts.reduce((s, p) => s + p.x * p.x, 0);
+  const den   = n * sumX2 - sumX * sumX;
+  if (Math.abs(den) < 0.001) return null;
+  const m = (n * sumXY - sumX * sumY) / den;
+  const b = (sumY - m * sumX) / n;
+  const lastPt = pts[pts.length - 1];
+  const [lastYr, lastMo] = lastPt.mKey.split('-').map(Number);
+  const projections = [];
+  for (let i = 1; i <= 2; i++) {
+    let pm = lastMo + i, py = lastYr;
+    if (pm > 12) { pm -= 12; py++; }
+    projections.push({
+      mKey:   `${py}-${String(pm).padStart(2,'0')}`,
+      mLabel: MONTH_NAMES_JS[pm - 1] + ' ' + py,
+      value:  Math.max(0, m * (lastPt.x + i) + b),
+    });
+  }
+  return { m, b, projections, pts };
+}
+
 // ── State ───────────────────────────────────────────────────────────────────────
 let allRows = [];
 let charts  = {};
@@ -574,6 +772,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (saved) _applyTheme(saved);
   const savedScheme = localStorage.getItem('ig-scheme') || 'creator';
   setScheme(savedScheme);
+  loadSettings();
 
   // Render cached data instantly if available and fresh
   const raw = localStorage.getItem(DATA_CACHE_KEY);
@@ -669,7 +868,9 @@ function filteredRows() {
 
 // ── Render ───────────────────────────────────────────────────────────────────────
 function render() {
-  const rows = filteredRows();
+  const rows     = filteredRows();
+  const settings = getSettings();
+  const f        = getFilters();
 
   let totSessions = 0, totOrders = 0, totRevenue = 0, totBounces = 0;
   rows.forEach(r => {
@@ -698,6 +899,32 @@ function render() {
   else if (bounceRate < 60) bp.classList.add('warn');
   else                      bp.classList.add('bad');
 
+  // ── Target bars & pace badges ─────────────────────────────
+  const sessBar = document.getElementById('sessions-bar-wrap');
+  if (settings.sessionsTarget > 0) {
+    const pct = Math.min(totSessions / settings.sessionsTarget * 100, 100);
+    document.getElementById('sessions-bar-fill').style.width = pct.toFixed(1) + '%';
+    document.getElementById('sessions-bar-fill').style.background = pct >= 100 ? 'var(--good)' : pct >= 75 ? 'var(--warn)' : 'var(--ig)';
+    document.getElementById('sessions-bar-label').textContent = pct.toFixed(1) + '% of ' + settings.sessionsTarget.toLocaleString() + ' target';
+    sessBar.classList.add('visible');
+  } else {
+    sessBar.classList.remove('visible');
+  }
+  setPaceBadge('pace-sessions', totSessions, settings.sessionsTarget);
+
+  const revBar = document.getElementById('revenue-bar-wrap');
+  if (settings.revenueTarget > 0) {
+    const pct = Math.min(totRevenue / settings.revenueTarget * 100, 100);
+    document.getElementById('revenue-bar-fill').style.width = pct.toFixed(1) + '%';
+    document.getElementById('revenue-bar-fill').style.background = pct >= 100 ? 'var(--good)' : pct >= 75 ? 'var(--warn)' : 'var(--ig)';
+    document.getElementById('revenue-bar-label').textContent = pct.toFixed(1) + '% of ' + fmt$(settings.revenueTarget) + ' target';
+    revBar.classList.add('visible');
+  } else {
+    revBar.classList.remove('visible');
+  }
+  setPaceBadge('pace-revenue', totRevenue, settings.revenueTarget);
+  setPaceBadge('pace-cvr', cvr, settings.cvrTarget);
+
   // Funnel
   document.getElementById('f-sessions').textContent  = fmtN(totSessions);
   document.getElementById('f-orders').textContent    = fmtN(totOrders);
@@ -705,23 +932,78 @@ function render() {
   document.getElementById('f-cvr-label').textContent = cvr.toFixed(1) + '% conversion';
   document.getElementById('f-aov-label').textContent = fmt$(aov) + ' avg order';
 
-  // ── Monthly trend ────────────────────────────────────────
-  const mMap = {};
-  rows.forEach(r => {
+  // ── Monthly trend + Forecast ─────────────────────────────
+  const mMapAll = {};
+  allRows.filter(r =>
+    (!f.campaign || r.campaign === f.campaign) &&
+    (!f.content  || r.content  === f.content)
+  ).forEach(r => {
     if (!r.mKey) return;
-    if (!mMap[r.mKey]) mMap[r.mKey] = { label: r.mLabel, rev: 0, sess: 0 };
-    mMap[r.mKey].rev  += r.revenue;
-    mMap[r.mKey].sess += r.sessions;
+    if (!mMapAll[r.mKey]) mMapAll[r.mKey] = { label: r.mLabel, rev: 0, sess: 0 };
+    mMapAll[r.mKey].rev  += r.revenue;
+    mMapAll[r.mKey].sess += r.sessions;
   });
-  const sorted = Object.entries(mMap).sort(([a],[b]) => a.localeCompare(b));
+  const sortedAll = Object.entries(mMapAll).sort(([a],[b]) => a.localeCompare(b));
+  const forecast  = linearForecast(sortedAll);
+
+  // ── Forecast card ─────────────────────────────────────────
+  const fcCard = document.getElementById('forecast-card');
+  if (forecast) {
+    const proj1     = forecast.projections[0];
+    const nMonths   = forecast.pts.length;
+    const trendWord = forecast.m >= 0 ? 'growing' : 'declining';
+    document.getElementById('forecast-projected-value').textContent = fmt$(proj1.value);
+    document.getElementById('forecast-projected-sub').textContent   = proj1.mLabel;
+    let sentence = `Based on a ${trendWord} trend over the last ${nMonths} months, IG-attributed revenue is projected to reach ${fmt$(proj1.value)} by ${proj1.mLabel}.`;
+    if (settings.revenueTarget > 0) {
+      if (proj1.value >= settings.revenueTarget) {
+        sentence += ` You're on pace to meet your ${fmt$(settings.revenueTarget)} target.`;
+      } else {
+        const gap = settings.revenueTarget - proj1.value;
+        sentence += ` That's ${fmt$(gap)} short of your ${fmt$(settings.revenueTarget)} target — consider reviewing your top-performing campaigns.`;
+      }
+    }
+    document.getElementById('forecast-sentence').textContent = sentence;
+    document.getElementById('forecast-meta').textContent = `Projection based on linear trend (last ${nMonths} months of actuals). Adjust filters to refine the forecast window.`;
+    fcCard.classList.add('visible');
+  } else {
+    fcCard.classList.remove('visible');
+  }
+
+  // ── Chart: filtered display data + projected line ─────────
+  const filteredSorted = sortedAll.filter(([k]) => {
+    const [ky, km] = k.split('-');
+    return (!f.year || ky === f.year) && (!f.month || km === f.month);
+  });
+
+  const chartLabels = filteredSorted.map(([,v]) => v.label);
+  const chartRev    = filteredSorted.map(([,v]) => +v.rev.toFixed(2));
+  const chartSess   = filteredSorted.map(([,v]) => v.sess);
+  const chartProj   = filteredSorted.map(() => null);
+
+  const showProjected = !f.month && forecast && filteredSorted.length >= 2;
+  if (showProjected) {
+    chartProj[chartProj.length - 1] = chartRev[chartRev.length - 1];
+    forecast.projections.forEach(p => {
+      chartLabels.push(p.mLabel);
+      chartRev.push(null);
+      chartSess.push(null);
+      chartProj.push(+p.value.toFixed(2));
+    });
+  }
+
   const sc = SCHEMES[currentScheme];
-  renderChart('chart-trend', 'bar', sorted.map(([,v]) => v.label), [
-    { label: 'Revenue', data: sorted.map(([,v]) => +v.rev.toFixed(2)),
+  const trendDatasets = [
+    { label: 'Revenue', data: chartRev,
       backgroundColor: hexAlpha(sc.c1,.65), borderColor: sc.c1, borderWidth: 1.5, borderRadius: 4 },
-    { label: 'Sessions', data: sorted.map(([,v]) => v.sess),
+    { label: 'Sessions', data: chartSess,
       type: 'line', borderColor: sc.c2, backgroundColor: hexAlpha(sc.c2,.1),
       borderWidth: 2, pointRadius: 3, tension: .35, fill: true, yAxisID: 'y2' },
-  ], { dualAxis: true, y1: 'Revenue ($)', y2: 'Sessions' });
+  ];
+  if (showProjected) {
+    trendDatasets.push({ label: 'Projected Revenue', data: chartProj, type: 'line', borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: .35, borderDash: [6,4], spanGaps: false, yAxisID: 'y' });
+  }
+  renderChart('chart-trend', 'bar', chartLabels, trendDatasets, { dualAxis: true, y1: 'Revenue ($)', y2: 'Sessions' });
 
   // ── Top campaigns by revenue ─────────────────────────────
   const campMap = {};
