@@ -279,9 +279,9 @@
       bottom: 0; left: 0; right: 0;
       height: 3px;
     }
-    .funnel-step.s1::before { background: linear-gradient(90deg, #833ab4, #e1306c); }
-    .funnel-step.s2::before { background: linear-gradient(90deg, #e1306c, #f77737); }
-    .funnel-step.s3::before { background: linear-gradient(90deg, #f77737, #10b981); }
+    .funnel-step.s1::before { background: linear-gradient(90deg, var(--ig),      var(--ig2)); }
+    .funnel-step.s2::before { background: linear-gradient(90deg, var(--ig2),     var(--accent)); }
+    .funnel-step.s3::before { background: linear-gradient(90deg, var(--accent),  var(--ig)); }
 
     .funnel-label   { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
     .funnel-value   { font-size: 28px; font-weight: 800; line-height: 1; color: var(--text); }
