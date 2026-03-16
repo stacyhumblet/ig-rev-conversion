@@ -43,8 +43,10 @@
     }
 
     /* ── Colour schemes ─────────────────────────────────────── */
-    /* slate = :root defaults (no class needed) */
     html.scheme-creator { --ig:#a855f7; --ig2:#06b6d4; --ig-dim:rgba(168,85,247,.15); --accent:#10b981; }
+    html.scheme-slate   { --ig:#78909c; --ig2:#546e7a; --ig-dim:rgba(120,144,156,.15); --accent:#90a4ae; }
+    html.scheme-creator[data-theme="light"] { --ig:#7c3aed; --ig2:#0284c7; --ig-dim:rgba(124,58,237,.08); --accent:#059669; }
+    html.scheme-slate[data-theme="light"]   { --ig:#546e7a; --ig2:#37474f; --ig-dim:rgba(84,110,122,.08); --accent:#607d8b; }
     html.scheme-ocean   { --ig:#0ea5e9; --ig2:#22d3ee; --ig-dim:rgba(14,165,233,.15); --accent:#38bdf8; }
     html.scheme-sunset  { --ig:#f97316; --ig2:#ec4899; --ig-dim:rgba(249,115,22,.15); --accent:#f59e0b; }
     html.scheme-forest  { --ig:#10b981; --ig2:#34d399; --ig-dim:rgba(16,185,129,.15); --accent:#6ee7b7; }
@@ -686,8 +688,8 @@ function render() {
 const SCHEMES = {
   creator: { c1:'#a855f7', c2:'#06b6d4', c3:'#10b981',
     palette:['#a855f7','#06b6d4','#10b981','#7c3aed','#22d3ee','#34d399','#8b5cf6','#67e8f9','#6ee7b7','#c084fc'] },
-  slate:   { c1:'#5a9fc2', c2:'#3d7fa0', c3:'#7b93b0',
-    palette:['#5a9fc2','#3d7fa0','#7b93b0','#4a7a9b','#6b8f9e','#7899b2','#8fafc2','#95afc0','#a8c0cf','#b8d0de'] },
+  slate:   { c1:'#94a3b8', c2:'#64748b', c3:'#78909c',
+    palette:['#94a3b8','#64748b','#78909c','#b0bec5','#546e7a','#90a4ae','#607d8b','#cfd8dc','#9badb8','#b0c4cf'] },
   ocean:   { c1:'#0ea5e9', c2:'#22d3ee', c3:'#38bdf8',
     palette:['#0ea5e9','#22d3ee','#38bdf8','#0284c7','#7dd3fc','#60a5fa','#93c5fd','#bae6fd','#0369a1','#075985'] },
   sunset:  { c1:'#f97316', c2:'#ec4899', c3:'#f59e0b',
@@ -781,7 +783,7 @@ function setScheme(scheme, btn) {
   if (target) target.classList.add('active');
   const html = document.documentElement;
   html.className = html.className.replace(/\bscheme-\w+/g, '').trim();
-  if (currentScheme !== 'slate') html.classList.add('scheme-' + currentScheme);
+  html.classList.add('scheme-' + currentScheme);
   const sc = SCHEMES[currentScheme];
   let bgEl = document.getElementById('scheme-bg-style');
   if (!bgEl) { bgEl = document.createElement('style'); bgEl.id = 'scheme-bg-style'; document.head.appendChild(bgEl); }
