@@ -550,7 +550,8 @@ let charts  = {};
 
 // ── Boot ────────────────────────────────────────────────────────────────────────
 const DATA_CACHE_KEY = 'ig-data-cache';
-const DATA_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const DATA_CACHE_TTL = 60 * 60 * 1000; // 1 hour — serve cache, refresh in background
+const FETCH_TIMEOUT  = 8000;            // 8 seconds before showing timeout error
 
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -558,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const savedScheme = localStorage.getItem('ig-scheme') || 'creator';
   setScheme(savedScheme);
 
-  // Render cached data instantly if available and fresh
+  // Render cached data instantly if available
   const raw = localStorage.getItem(DATA_CACHE_KEY);
   if (raw) {
     try {
@@ -571,22 +572,29 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) { /* bad cache entry, fall through */ }
   }
 
-  // No fresh cache — fetch and show
-  fetch(API_URL)
+  // No fresh cache — fetch with timeout
+  fetchWithTimeout(API_URL, FETCH_TIMEOUT)
     .then(r => r.json())
     .then(data => { saveCache(data); onData(data); })
     .catch(onError);
 });
+
+function fetchWithTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal })
+    .finally(() => clearTimeout(timer));
+}
 
 function saveCache(data) {
   try { localStorage.setItem(DATA_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch(e) {}
 }
 
 function refreshInBackground() {
-  fetch(API_URL)
+  fetchWithTimeout(API_URL, 15000)
     .then(r => r.json())
     .then(data => { saveCache(data); onData(data); })
-    .catch(() => {}); // silent — don't disrupt the already-rendered UI
+    .catch(() => {}); // silent
 }
 
 function onData(data) {
@@ -599,10 +607,13 @@ function onData(data) {
 }
 
 function onError(e) {
+  const isTimeout = e && (e.name === 'AbortError' || String(e).includes('abort'));
   document.getElementById('loading').style.display = 'none';
   const el = document.getElementById('error-msg');
   el.style.display = 'block';
-  el.textContent = 'Error loading data: ' + (e.message || String(e));
+  el.innerHTML = isTimeout
+    ? 'Data server is warming up — <button onclick="location.reload()" style="background:none;border:1px solid #fca5a5;color:#fca5a5;padding:2px 10px;border-radius:6px;cursor:pointer;font-size:12px">Retry</button>'
+    : 'Error loading data: ' + (e.message || String(e));
 }
 
 // ── Filters ──────────────────────────────────────────────────────────────────────
