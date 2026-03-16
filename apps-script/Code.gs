@@ -4,10 +4,10 @@
 //  Northwind Consulting — Creator & Ecommerce
 // ============================================================
 
-const DATA_SHEET_ID = '1XojNK4GrGY6j7JeP47fWOep4Iv-S42-D-7dY9OUJ3CA';
+const DATA_SHEET_ID = '1c86yKsvHafajJSLYiHDrFQ6Evgx9rxGJTalRSEI46l0';
 const TRAFFIC_TAB   = 'db_traffic';
 const CACHE_KEY     = 'ig_commerce_v1';
-const CACHE_TTL     = 21600; // 6 hours
+const CACHE_TTL     = 1200;  // 20 min — trigger every 10 min keeps it always warm
 const PLATFORM      = 'instagram';
 
 
@@ -157,8 +157,8 @@ function createWarmCacheTrigger() {
   ScriptApp.getProjectTriggers()
     .filter(t => t.getHandlerFunction() === 'warmCache')
     .forEach(t => ScriptApp.deleteTrigger(t));
-  ScriptApp.newTrigger('warmCache').timeBased().everyHours(4).create();
-  Logger.log('Trigger created.');
+  ScriptApp.newTrigger('warmCache').timeBased().everyMinutes(10).create();
+  Logger.log('Trigger created — fires every 10 min, cache TTL 20 min.');
 }
 
 function testDataAccess() {

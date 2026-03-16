@@ -247,10 +247,13 @@
     .kpi-value { font-size: 22px; font-weight: 800; line-height: 1; color: var(--text); }
     .kpi-sub   { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-    .kpi-pill.ig    { border-color: rgba(225,48,108,.35); }
+    .kpi-pill .kpi-value { color: var(--ig); }
+    .kpi-pill.ig    { border-color: var(--ig-dim); }
     .kpi-pill.ig .kpi-value { color: var(--ig); }
-    .kpi-pill.good  .kpi-value { color: var(--good); }
-    .kpi-pill.warn  .kpi-value { color: var(--warn); }
+    .kpi-pill.good  { border-color: var(--ig-dim); }
+    .kpi-pill.good  .kpi-value { color: var(--ig); }
+    .kpi-pill.warn  { border-color: var(--ig-dim); }
+    .kpi-pill.warn  .kpi-value { color: var(--ig2); }
     .kpi-pill.bad   .kpi-value { color: var(--bad);  }
     .kpi-pill.accent .kpi-value { color: var(--accent); }
 
@@ -295,21 +298,29 @@
     .chart-wrap    { position: relative; height: 260px; margin-top: 14px; }
     .chart-wrap-sm { position: relative; height: 240px; margin-top: 14px; }
 
-    /* ── Loading ───────────────────────────────────────────── */
-    #loading {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; min-height: 60vh; gap: 16px;
-      color: var(--muted); font-size: 14px;
-    }
-    .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid rgba(225,48,108,.15);
-      border-top-color: var(--ig);
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ── Loading skeleton ───────────────────────────────────── */
     #dashboard { display: none; }
+    .skel {
+      background: linear-gradient(90deg,
+        var(--surface) 25%, rgba(255,255,255,.09) 50%, var(--surface) 75%);
+      background-size: 400% 100%;
+      animation: shimmer 1.4s ease infinite;
+      border-radius: 8px;
+    }
+    [data-theme="light"] .skel {
+      background: linear-gradient(90deg,
+        rgba(0,0,0,.06) 25%, rgba(0,0,0,.03) 50%, rgba(0,0,0,.06) 75%);
+      background-size: 400% 100%;
+      animation: shimmer 1.4s ease infinite;
+    }
+    @keyframes shimmer { 0%{background-position:100% 50%} 100%{background-position:-100% 50%} }
+    .skel-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
     #error-msg {
       display: none;
       background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
@@ -371,10 +382,40 @@
   </div>
 </div>
 
-<!-- Loading -->
+<!-- Loading skeleton -->
 <div id="loading">
-  <div class="spinner"></div>
-  <span>Loading Instagram data…</span>
+  <div class="container">
+    <div class="card" style="margin-bottom:16px">
+      <div class="skel" style="height:14px;width:60px;margin-bottom:14px"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="skel" style="height:38px;width:130px;border-radius:8px"></div>
+        <div class="skel" style="height:38px;width:130px;border-radius:8px"></div>
+        <div class="skel" style="height:38px;width:130px;border-radius:8px"></div>
+        <div class="skel" style="height:38px;width:130px;border-radius:8px"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+      <div class="skel-pill"><div class="skel" style="height:12px;width:60px"></div><div class="skel" style="height:26px;width:100px"></div></div>
+      <div class="skel-pill"><div class="skel" style="height:12px;width:60px"></div><div class="skel" style="height:26px;width:100px"></div></div>
+      <div class="skel-pill"><div class="skel" style="height:12px;width:60px"></div><div class="skel" style="height:26px;width:100px"></div></div>
+      <div class="skel-pill"><div class="skel" style="height:12px;width:60px"></div><div class="skel" style="height:26px;width:100px"></div></div>
+      <div class="skel-pill"><div class="skel" style="height:12px;width:60px"></div><div class="skel" style="height:26px;width:100px"></div></div>
+      <div class="skel-pill"><div class="skel" style="height:12px;width:60px"></div><div class="skel" style="height:26px;width:100px"></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+      <div class="card"><div class="skel" style="height:70px"></div></div>
+      <div class="card"><div class="skel" style="height:70px"></div></div>
+      <div class="card"><div class="skel" style="height:70px"></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card"><div class="skel" style="height:220px"></div></div>
+      <div class="card"><div class="skel" style="height:220px"></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card"><div class="skel" style="height:200px"></div></div>
+      <div class="card"><div class="skel" style="height:200px"></div></div>
+    </div>
+  </div>
 </div>
 
 <!-- Error -->
