@@ -549,17 +549,45 @@ let allRows = [];
 let charts  = {};
 
 // ── Boot ────────────────────────────────────────────────────────────────────────
+const DATA_CACHE_KEY = 'ig-data-cache';
+const DATA_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) _applyTheme(saved);
   const savedScheme = localStorage.getItem('ig-scheme') || 'creator';
   setScheme(savedScheme);
 
+  // Render cached data instantly if available and fresh
+  const raw = localStorage.getItem(DATA_CACHE_KEY);
+  if (raw) {
+    try {
+      const { ts, data } = JSON.parse(raw);
+      if (Date.now() - ts < DATA_CACHE_TTL) {
+        onData(data);           // instant render from cache
+        refreshInBackground();  // silently fetch fresh data
+        return;
+      }
+    } catch(e) { /* bad cache entry, fall through */ }
+  }
+
+  // No fresh cache — fetch and show
   fetch(API_URL)
     .then(r => r.json())
-    .then(onData)
+    .then(data => { saveCache(data); onData(data); })
     .catch(onError);
 });
+
+function saveCache(data) {
+  try { localStorage.setItem(DATA_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch(e) {}
+}
+
+function refreshInBackground() {
+  fetch(API_URL)
+    .then(r => r.json())
+    .then(data => { saveCache(data); onData(data); })
+    .catch(() => {}); // silent — don't disrupt the already-rendered UI
+}
 
 function onData(data) {
   if (data.error) { onError(new Error(data.error)); return; }
