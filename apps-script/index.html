@@ -42,6 +42,47 @@
       --accent:    #6a1b9a;
     }
 
+    /* ── Colour schemes ─────────────────────────────────────── */
+    html.scheme-ocean  { --ig:#0ea5e9; --ig2:#22d3ee; --ig-dim:rgba(14,165,233,.15); --accent:#06b6d4; }
+    html.scheme-sunset { --ig:#f97316; --ig2:#ec4899; --ig-dim:rgba(249,115,22,.15); --accent:#f59e0b; }
+    html.scheme-forest { --ig:#10b981; --ig2:#34d399; --ig-dim:rgba(16,185,129,.15); --accent:#6ee7b7; }
+    html.scheme-rose   { --ig:#e879f9; --ig2:#a855f7; --ig-dim:rgba(232,121,249,.15); --accent:#818cf8; }
+    html.scheme-ocean[data-theme="light"]  { --ig:#0284c7; --ig2:#22d3ee; --ig-dim:rgba(2,132,199,.08); --accent:#0ea5e9; }
+    html.scheme-sunset[data-theme="light"] { --ig:#ea580c; --ig2:#db2777; --ig-dim:rgba(234,88,12,.08); --accent:#f59e0b; }
+    html.scheme-forest[data-theme="light"] { --ig:#059669; --ig2:#10b981; --ig-dim:rgba(5,150,105,.08); --accent:#34d399; }
+    html.scheme-rose[data-theme="light"]   { --ig:#d946ef; --ig2:#9333ea; --ig-dim:rgba(217,70,239,.08); --accent:#818cf8; }
+
+    /* ── Scheme pill bar ────────────────────────────────────── */
+    .scheme-pills {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .scheme-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: 100px;
+      padding: 6px 13px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color .18s, color .18s, background .18s;
+      white-space: nowrap;
+    }
+    .scheme-pill:hover { border-color: var(--ig); color: var(--text); }
+    .scheme-pill.active { background: rgba(255,255,255,.07); border-color: var(--ig); color: var(--text); }
+    [data-theme="light"] .scheme-pill.active { background: rgba(0,0,0,.05); }
+    .scheme-swatch {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -165,19 +206,20 @@
       padding: 8px 28px 8px 10px;
       border-radius: 10px;
       border: 1px solid var(--border);
-      background: rgba(0,0,0,.18);
+      background: rgba(14,22,52,.92);
       color: var(--text);
       font-size: 13px;
       outline: none;
       appearance: none;
+      color-scheme: dark;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a7b1d6'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 10px center;
       cursor: pointer;
-      transition: background .3s, border-color .2s, color .2s;
+      transition: border-color .2s;
     }
-    select:focus { border-color: var(--ig); }
-    [data-theme="light"] select { background-color: rgba(255,255,255,.88); }
+    select:focus { border-color: var(--ig); outline: none; }
+    [data-theme="light"] select { background: #ffffff; color: #1a0a12; color-scheme: light; border-color: rgba(0,0,0,.15); }
 
     .reset-btn {
       align-self: flex-end;
@@ -313,6 +355,23 @@
       <div class="brand-subtitle">Traffic · Conversions · Revenue · Northwind Consulting</div>
     </div>
   </div>
+  <div class="scheme-pills">
+    <button class="scheme-pill active" data-scheme="ig" onclick="setScheme('ig',this)">
+      <span class="scheme-swatch" style="background:linear-gradient(135deg,#e1306c,#833ab4)"></span>Instagram
+    </button>
+    <button class="scheme-pill" data-scheme="ocean" onclick="setScheme('ocean',this)">
+      <span class="scheme-swatch" style="background:linear-gradient(135deg,#0ea5e9,#22d3ee)"></span>Ocean
+    </button>
+    <button class="scheme-pill" data-scheme="sunset" onclick="setScheme('sunset',this)">
+      <span class="scheme-swatch" style="background:linear-gradient(135deg,#f97316,#ec4899)"></span>Sunset
+    </button>
+    <button class="scheme-pill" data-scheme="forest" onclick="setScheme('forest',this)">
+      <span class="scheme-swatch" style="background:linear-gradient(135deg,#10b981,#34d399)"></span>Forest
+    </button>
+    <button class="scheme-pill" data-scheme="rose" onclick="setScheme('rose',this)">
+      <span class="scheme-swatch" style="background:linear-gradient(135deg,#e879f9,#a855f7)"></span>Rose
+    </button>
+  </div>
   <div class="topbar-right">
     <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark">
       <span id="theme-label-dark">🌙</span>
@@ -420,8 +479,8 @@
         <div class="card-title">Revenue &amp; Sessions Trend</div>
         <div class="card-subtitle">Monthly Instagram-attributed revenue vs. sessions</div>
         <div class="legend-row">
-          <div class="legend-item"><div class="legend-dot" style="background:#e1306c"></div>Revenue</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#833ab4"></div>Sessions</div>
+          <div class="legend-item"><div class="legend-dot" id="legend-revenue" style="background:#e1306c"></div>Revenue</div>
+          <div class="legend-item"><div class="legend-dot" id="legend-sessions" style="background:#833ab4"></div>Sessions</div>
         </div>
         <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
       </div>
@@ -461,6 +520,8 @@ let charts  = {};
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) _applyTheme(saved);
+  const savedScheme = localStorage.getItem('ig-scheme') || 'ig';
+  setScheme(savedScheme);
 
   google.script.run
     .withSuccessHandler(onData)
@@ -576,11 +637,12 @@ function render() {
     mMap[r.mKey].sess += r.sessions;
   });
   const sorted = Object.entries(mMap).sort(([a],[b]) => a.localeCompare(b));
+  const sc = SCHEMES[currentScheme];
   renderChart('chart-trend', 'bar', sorted.map(([,v]) => v.label), [
     { label: 'Revenue', data: sorted.map(([,v]) => +v.rev.toFixed(2)),
-      backgroundColor: 'rgba(225,48,108,.65)', borderColor: '#e1306c', borderWidth: 1.5, borderRadius: 4 },
+      backgroundColor: hexAlpha(sc.c1,.65), borderColor: sc.c1, borderWidth: 1.5, borderRadius: 4 },
     { label: 'Sessions', data: sorted.map(([,v]) => v.sess),
-      type: 'line', borderColor: '#833ab4', backgroundColor: 'rgba(131,58,180,.1)',
+      type: 'line', borderColor: sc.c2, backgroundColor: hexAlpha(sc.c2,.1),
       borderWidth: 2, pointRadius: 3, tension: .35, fill: true, yAxisID: 'y2' },
   ], { dualAxis: true, y1: 'Revenue ($)', y2: 'Sessions' });
 
@@ -594,7 +656,7 @@ function render() {
   const campEntries = Object.entries(campMap).sort(([,a],[,b]) => b - a).slice(0, 8);
   renderChart('chart-campaigns', 'bar', campEntries.map(([k]) => k), [
     { label: 'Revenue', data: campEntries.map(([,v]) => +v.toFixed(2)),
-      backgroundColor: campEntries.map((_, i) => IG_PALETTE[i % IG_PALETTE.length]),
+      backgroundColor: campEntries.map((_, i) => SCHEMES[currentScheme].palette[i % SCHEMES[currentScheme].palette.length]),
       borderRadius: 4, borderSkipped: false }
   ], { indexAxis: 'y', x: { title: 'Revenue ($)' } });
 
@@ -611,7 +673,7 @@ function render() {
     .sort(([,a],[,b]) => b - a).slice(0, 8);
   renderChart('chart-cvr', 'bar', cvrEntries.map(([k]) => k), [
     { label: 'Conv. Rate %', data: cvrEntries.map(([,v]) => v),
-      backgroundColor: 'rgba(131,58,180,.65)', borderColor: '#833ab4',
+      backgroundColor: hexAlpha(sc.c2,.65), borderColor: sc.c2,
       borderWidth: 1.5, borderRadius: 4, borderSkipped: false }
   ], { indexAxis: 'y', x: { title: 'Conversion Rate (%)' } });
 
@@ -625,17 +687,31 @@ function render() {
   const contentEntries = Object.entries(contentMap).sort(([,a],[,b]) => b - a).slice(0, 8);
   renderChart('chart-content', 'bar', contentEntries.map(([k]) => k), [
     { label: 'Sessions', data: contentEntries.map(([,v]) => v),
-      backgroundColor: contentEntries.map((_, i) => IG_PALETTE[i % IG_PALETTE.length]),
+      backgroundColor: contentEntries.map((_, i) => SCHEMES[currentScheme].palette[i % SCHEMES[currentScheme].palette.length]),
       borderRadius: 4, borderSkipped: false }
   ], { indexAxis: 'y', x: { title: 'Sessions' }, integerValues: true });
 }
 
 
 // ── Chart helpers ───────────────────────────────────────────────────────────────
-const IG_PALETTE = [
-  '#e1306c','#833ab4','#f77737','#10b981','#5a9fc2',
-  '#fcaf45','#fd1d1d','#a78bfa','#34a08e','#f59e0b',
-];
+const SCHEMES = {
+  ig:     { c1:'#e1306c', c2:'#833ab4', c3:'#f77737',
+    palette:['#e1306c','#833ab4','#f77737','#10b981','#5a9fc2','#fcaf45','#fd1d1d','#a78bfa','#34a08e','#f59e0b'] },
+  ocean:  { c1:'#0ea5e9', c2:'#22d3ee', c3:'#06b6d4',
+    palette:['#0ea5e9','#22d3ee','#06b6d4','#38bdf8','#0284c7','#7dd3fc','#60a5fa','#93c5fd','#bae6fd','#0c4a6e'] },
+  sunset: { c1:'#f97316', c2:'#ec4899', c3:'#f59e0b',
+    palette:['#f97316','#ec4899','#f59e0b','#ef4444','#a855f7','#fb923c','#f472b6','#fbbf24','#fca5a5','#e879f9'] },
+  forest: { c1:'#10b981', c2:'#34d399', c3:'#6ee7b7',
+    palette:['#10b981','#34d399','#6ee7b7','#059669','#84cc16','#4ade80','#a3e635','#86efac','#65a30d','#047857'] },
+  rose:   { c1:'#e879f9', c2:'#a855f7', c3:'#818cf8',
+    palette:['#e879f9','#a855f7','#818cf8','#ec4899','#f0abfc','#c084fc','#f9a8d4','#d8b4fe','#9333ea','#7c3aed'] },
+};
+let currentScheme = 'ig';
+
+function hexAlpha(hex, a) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
 
 function renderChart(id, type, labels, datasets, opts = {}) {
   const isDark    = document.documentElement.getAttribute('data-theme') !== 'light';
@@ -705,6 +781,27 @@ function renderChart(id, type, labels, datasets, opts = {}) {
   });
 }
 
+
+// ── Scheme ──────────────────────────────────────────────────────────────────────
+function setScheme(scheme, btn) {
+  currentScheme = scheme in SCHEMES ? scheme : 'ig';
+  document.querySelectorAll('.scheme-pill').forEach(p => p.classList.remove('active'));
+  const target = btn || document.querySelector(`[data-scheme="${currentScheme}"]`);
+  if (target) target.classList.add('active');
+  const html = document.documentElement;
+  html.className = html.className.replace(/\bscheme-\w+/g, '').trim();
+  if (currentScheme !== 'ig') html.classList.add('scheme-' + currentScheme);
+  const sc = SCHEMES[currentScheme];
+  let bgEl = document.getElementById('scheme-bg-style');
+  if (!bgEl) { bgEl = document.createElement('style'); bgEl.id = 'scheme-bg-style'; document.head.appendChild(bgEl); }
+  bgEl.textContent = `body{background:radial-gradient(1100px 600px at 10% 0%,${hexAlpha(sc.c1,.14)},transparent 55%),radial-gradient(800px 500px at 90% 5%,${hexAlpha(sc.c2,.10)},transparent 50%),var(--bg)!important}[data-theme="light"] body{background:radial-gradient(1100px 600px at 10% 0%,${hexAlpha(sc.c1,.06)},transparent 55%),radial-gradient(800px 500px at 90% 5%,${hexAlpha(sc.c2,.04)},transparent 50%),var(--bg)!important}`;
+  const ld1 = document.getElementById('legend-revenue');
+  const ld2 = document.getElementById('legend-sessions');
+  if (ld1) ld1.style.background = sc.c1;
+  if (ld2) ld2.style.background = sc.c2;
+  localStorage.setItem('ig-scheme', currentScheme);
+  if (allRows.length > 0) render();
+}
 
 // ── Theme ────────────────────────────────────────────────────────────────────────
 function toggleTheme() {
