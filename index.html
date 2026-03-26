@@ -587,7 +587,7 @@ function transformGA4(raw) {
     rows.push({
       sessions: row.sessions    || 0,
       orders:   row.transactions || 0,
-      revenue:  row.revenue     || 0,
+      revenue:  parseFloat(row.revenue) || 0,
       bounces:  Math.round((row.sessions || 0) * parseFloat(row.bounce_rate || 0)),
       campaign: row.campaign    || '(none)',
       content:  row.utm_content || '(none)',
@@ -893,6 +893,13 @@ function _applyTheme(theme) {
   if (allRows.length > 0) render();
 }
 
+
+// ── Cross-frame theme control (Northwind Tools Suite) ─────────────────────────
+window.addEventListener('message', (e) => {
+  if (!e.data || e.data.type !== 'nwp-theme') return;
+  if (e.data.scheme) setScheme(e.data.scheme);
+  if (e.data.mode)   _applyTheme(e.data.mode);
+});
 
 // ── Formatters ───────────────────────────────────────────────────────────────────
 function fmt$(n) {
