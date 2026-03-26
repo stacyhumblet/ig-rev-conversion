@@ -1,3 +1,9 @@
+<!--
+  Copyright © 2026 Northwind Pulse™. All rights reserved.
+  Unauthorized copying, reverse engineering, redistribution,
+  or reproduction of this software is strictly prohibited.
+  https://northwind-pulse.com/terms.html
+-->
 <!DOCTYPE html>
 <html>
 <head>
@@ -542,59 +548,58 @@
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'ig-commerce-theme';
-const API_URL     = 'https://script.google.com/macros/s/AKfycbyk9D2m4ZWuXVEGznBqsrzSS2lWJCoyebQ0uhICVpJk9AO9rFAr4ts_c20u2WuHPnQe0A/exec';
+const WORKER_URL  = 'https://northwind-data-worker.northwindconsultinginc.workers.dev';
+const CLIENT_ID   = 'demo';
 
 // ── State ───────────────────────────────────────────────────────────────────────
 let allRows = [];
 let charts  = {};
 
 // ── Boot ────────────────────────────────────────────────────────────────────────
-const DATA_CACHE_KEY = 'ig-data-cache';
-const DATA_CACHE_TTL = 60 * 60 * 1000; // 1 hour — serve cache, refresh in background
-const FETCH_TIMEOUT  = 8000;            // 8 seconds before showing timeout error
-
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) _applyTheme(saved);
   const savedScheme = localStorage.getItem('ig-scheme') || 'creator';
   setScheme(savedScheme);
 
-  // Render cached data instantly if available
-  const raw = localStorage.getItem(DATA_CACHE_KEY);
-  if (raw) {
-    try {
-      const { ts, data } = JSON.parse(raw);
-      if (Date.now() - ts < DATA_CACHE_TTL) {
-        onData(data);           // instant render from cache
-        refreshInBackground();  // silently fetch fresh data
-        return;
-      }
-    } catch(e) { /* bad cache entry, fall through */ }
-  }
-
-  // No fresh cache — fetch with timeout
-  fetchWithTimeout(API_URL, FETCH_TIMEOUT)
-    .then(r => r.json())
-    .then(data => { saveCache(data); onData(data); })
+  fetch(`${WORKER_URL}/data/${CLIENT_ID}/ga4`)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(raw => onData(transformGA4(raw)))
     .catch(onError);
 });
 
-function fetchWithTimeout(url, ms) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), ms);
-  return fetch(url, { signal: ctrl.signal })
-    .finally(() => clearTimeout(timer));
-}
-
-function saveCache(data) {
-  try { localStorage.setItem(DATA_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch(e) {}
-}
-
-function refreshInBackground() {
-  fetchWithTimeout(API_URL, 15000)
-    .then(r => r.json())
-    .then(data => { saveCache(data); onData(data); })
-    .catch(() => {}); // silent
+// ── Transform: GA4 KV → rows ────────────────────────────────────────────────────
+// Field notes:
+//   r.bounces: ❌ bounceRate metric exists in GA4 API but not currently fetched by worker
+//              — needs bounceRate added to the traffic report in fetchAndCacheGA4()
+//   r.content: utm_content dimension — available in GA4 API ✅
+//   r.campaign: utm_campaign dimension — available in GA4 API ✅
+function transformGA4(raw) {
+  const traffic = raw.traffic || [];
+  const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const rows    = [];
+  traffic.forEach(row => {
+    const d      = new Date(row.date);
+    const yr     = String(d.getFullYear());
+    const mo     = String(d.getMonth() + 1).padStart(2, '0');
+    const mKey   = yr + '-' + mo;
+    const mLabel = MONTHS[d.getMonth()] + ' ' + yr;
+    rows.push({
+      sessions: row.sessions    || 0,
+      orders:   row.transactions || 0,
+      revenue:  row.revenue     || 0,
+      bounces:  0,  // bounceRate not fetched by worker yet — add bounceRate metric to GA4 traffic report to enable
+      campaign: row.campaign    || '(none)',
+      content:  row.utm_content || '(none)',
+      yr, mo, mKey, mLabel,
+    });
+  });
+  const uniq = (arr) => [...new Set(arr)].sort();
+  const years     = uniq(rows.map(r => r.yr));
+  const months    = uniq(rows.map(r => r.mo)).map(m => ({ value: m, label: MONTHS[parseInt(m) - 1] }));
+  const campaigns = uniq(rows.map(r => r.campaign)).filter(c => c !== '(none)');
+  const contents  = uniq(rows.map(r => r.content)).filter(c => c !== '(none)');
+  return { rows, fo: { years, months, campaigns, contents } };
 }
 
 function onData(data) {
@@ -675,7 +680,9 @@ function render() {
 
   const cvr        = totSessions > 0 ? (totOrders   / totSessions * 100) : 0;
   const aov        = totOrders   > 0 ? (totRevenue  / totOrders)         : 0;
-  const bounceRate = totSessions > 0 ? (totBounces  / totSessions * 100) : 0;
+  // bounces always 0 until bounceRate metric is added to GA4 worker fetch
+  const hasBounces = totBounces > 0;
+  const bounceRate = (hasBounces && totSessions > 0) ? (totBounces / totSessions * 100) : 0;
 
   // KPIs
   document.getElementById('kpi-sessions').textContent = fmtN(totSessions);
@@ -683,12 +690,13 @@ function render() {
   document.getElementById('kpi-orders').textContent   = fmtN(totOrders);
   document.getElementById('kpi-cvr').textContent      = cvr.toFixed(1) + '%';
   document.getElementById('kpi-aov').textContent      = fmt$(aov);
-  document.getElementById('kpi-bounce').textContent   = bounceRate.toFixed(1) + '%';
+  document.getElementById('kpi-bounce').textContent   = hasBounces ? bounceRate.toFixed(1) + '%' : '—';
 
   // Color bounce pill
   const bp = document.getElementById('kpi-bounce-pill');
   bp.classList.remove('good','warn','bad');
-  if (bounceRate < 35)      bp.classList.add('good');
+  if (!hasBounces) { /* no data — no pill color */ }
+  else if (bounceRate < 35)      bp.classList.add('good');
   else if (bounceRate < 60) bp.classList.add('warn');
   else                      bp.classList.add('bad');
 
@@ -901,5 +909,9 @@ function fmtN(n) {
   return String(Math.round(n));
 }
 </script>
+<footer style="text-align:center;padding:24px 16px 16px;font-size:0.75rem;color:rgba(255,255,255,0.28);border-top:1px solid rgba(255,255,255,0.06);margin-top:48px;">
+  &copy; 2026 Northwind Pulse™. All rights reserved. &nbsp;&middot;&nbsp;
+  <a href="https://northwind-pulse.com/terms.html" style="color:rgba(255,255,255,0.35);text-decoration:underline;" target="_blank">Terms of Service</a>
+</footer>
 </body>
 </html>
