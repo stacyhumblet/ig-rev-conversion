@@ -891,6 +891,7 @@ function _applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '');
   localStorage.setItem(STORAGE_KEY, theme);
   if (allRows.length > 0) render();
+  window.parent.postMessage({ type: 'nwp-sidebar-theme', mode: theme }, '*');
 }
 
 
