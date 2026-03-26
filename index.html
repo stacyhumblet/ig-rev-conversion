@@ -588,7 +588,7 @@ function transformGA4(raw) {
       sessions: row.sessions    || 0,
       orders:   row.transactions || 0,
       revenue:  row.revenue     || 0,
-      bounces:  0,  // bounceRate not fetched by worker yet — add bounceRate metric to GA4 traffic report to enable
+      bounces:  Math.round((row.sessions || 0) * parseFloat(row.bounce_rate || 0)),
       campaign: row.campaign    || '(none)',
       content:  row.utm_content || '(none)',
       yr, mo, mKey, mLabel,
@@ -680,9 +680,7 @@ function render() {
 
   const cvr        = totSessions > 0 ? (totOrders   / totSessions * 100) : 0;
   const aov        = totOrders   > 0 ? (totRevenue  / totOrders)         : 0;
-  // bounces always 0 until bounceRate metric is added to GA4 worker fetch
-  const hasBounces = totBounces > 0;
-  const bounceRate = (hasBounces && totSessions > 0) ? (totBounces / totSessions * 100) : 0;
+  const bounceRate = totSessions > 0 ? (totBounces / totSessions * 100) : 0;
 
   // KPIs
   document.getElementById('kpi-sessions').textContent = fmtN(totSessions);
@@ -690,13 +688,12 @@ function render() {
   document.getElementById('kpi-orders').textContent   = fmtN(totOrders);
   document.getElementById('kpi-cvr').textContent      = cvr.toFixed(1) + '%';
   document.getElementById('kpi-aov').textContent      = fmt$(aov);
-  document.getElementById('kpi-bounce').textContent   = hasBounces ? bounceRate.toFixed(1) + '%' : '—';
+  document.getElementById('kpi-bounce').textContent   = bounceRate.toFixed(1) + '%';
 
   // Color bounce pill
   const bp = document.getElementById('kpi-bounce-pill');
   bp.classList.remove('good','warn','bad');
-  if (!hasBounces) { /* no data — no pill color */ }
-  else if (bounceRate < 35)      bp.classList.add('good');
+  if (bounceRate < 35)      bp.classList.add('good');
   else if (bounceRate < 60) bp.classList.add('warn');
   else                      bp.classList.add('bad');
 
