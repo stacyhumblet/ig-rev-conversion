@@ -159,7 +159,7 @@
     /* ── Layout ────────────────────────────────────────────── */
     .container {
       width: min(1340px, calc(100% - 32px));
-      margin: 20px auto 56px;
+      margin: 10px auto 20px;
       display: flex; flex-direction: column; gap: 14px;
     }
 
@@ -331,7 +331,7 @@
       display: none;
       background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
       color: #fca5a5; padding: 16px 20px; border-radius: 12px;
-      font-size: 13px; margin: 20px 0;
+      font-size: 13px; margin: 12px auto; max-width: min(1340px, calc(100% - 32px));
     }
 
     /* ── Legend ────────────────────────────────────────────── */
@@ -425,7 +425,7 @@
 </div>
 
 <!-- Error -->
-<div class="container"><div id="error-msg"></div></div>
+<div id="error-msg"></div>
 
 <!-- Dashboard -->
 <div id="dashboard">
