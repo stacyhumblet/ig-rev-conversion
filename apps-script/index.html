@@ -262,6 +262,81 @@
       letter-spacing: .5px; text-transform: uppercase;
       color: var(--muted); margin-bottom: 6px;
     }
+    .info-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 0 0 0 4px;
+      line-height: 1;
+      opacity: 0.7;
+      transition: opacity .15s, color .15s;
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
+    }
+    .info-btn:hover { opacity: 1; color: var(--primary); }
+    .kpi-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .kpi-modal-overlay.open { display: flex; }
+    .kpi-modal {
+      background: #111827;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 24px 28px;
+      max-width: 420px;
+      width: calc(100% - 40px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+      position: relative;
+    }
+    [data-theme="light"] .kpi-modal {
+      background: #ffffff;
+      border-color: rgba(0,0,0,.12);
+      box-shadow: 0 20px 60px rgba(0,0,0,.15);
+    }
+    .kpi-modal-close {
+      position: absolute;
+      top: 12px; right: 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+    }
+    .kpi-modal-close:hover { color: var(--text); }
+    .kpi-modal-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 14px;
+      padding-right: 24px;
+    }
+    .kpi-modal-section { margin-bottom: 12px; }
+    .kpi-modal-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .kpi-modal-section-body {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.55;
+    }
+    [data-theme="light"] .kpi-modal { color: #1a2142; }
+    [data-theme="light"] .kpi-modal-section-body { color: #1a2142; }
     .kpi-value { font-size: 22px; font-weight: 800; line-height: 1; color: var(--text); }
     .kpi-sub   { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
@@ -566,7 +641,7 @@
     <!-- KPI Row -->
     <div class="kpi-row">
       <div class="kpi-pill ig">
-        <div class="kpi-label">Sessions</div>
+        <div class="kpi-label">Sessions <button class="info-btn" onclick="showKpiInfo('sessions')">ⓘ</button></div>
         <div class="kpi-value" id="kpi-sessions">—</div>
         <div class="kpi-sub">From Instagram</div>
         <div class="target-bar-wrap" id="sessions-bar-wrap">
@@ -576,7 +651,7 @@
         <div class="pace-badge" id="pace-sessions"></div>
       </div>
       <div class="kpi-pill good">
-        <div class="kpi-label">Revenue</div>
+        <div class="kpi-label">Revenue <button class="info-btn" onclick="showKpiInfo('revenue')">ⓘ</button></div>
         <div class="kpi-value" id="kpi-revenue">—</div>
         <div class="kpi-sub">IG-attributed</div>
         <div class="target-bar-wrap" id="revenue-bar-wrap">
@@ -586,23 +661,23 @@
         <div class="pace-badge" id="pace-revenue"></div>
       </div>
       <div class="kpi-pill">
-        <div class="kpi-label">Orders</div>
+        <div class="kpi-label">Orders <button class="info-btn" onclick="showKpiInfo('orders')">ⓘ</button></div>
         <div class="kpi-value" id="kpi-orders">—</div>
         <div class="kpi-sub">Conversions</div>
       </div>
       <div class="kpi-pill accent">
-        <div class="kpi-label">Conv. Rate</div>
+        <div class="kpi-label">Conv. Rate <button class="info-btn" onclick="showKpiInfo('cvr')">ⓘ</button></div>
         <div class="kpi-value" id="kpi-cvr">—</div>
         <div class="kpi-sub">Sessions → Orders</div>
         <div class="pace-badge" id="pace-cvr"></div>
       </div>
       <div class="kpi-pill">
-        <div class="kpi-label">Avg Order Value</div>
+        <div class="kpi-label">Avg Order Value <button class="info-btn" onclick="showKpiInfo('aov')">ⓘ</button></div>
         <div class="kpi-value" id="kpi-aov">—</div>
         <div class="kpi-sub">Revenue / orders</div>
       </div>
       <div class="kpi-pill" id="kpi-bounce-pill">
-        <div class="kpi-label">Bounce Rate</div>
+        <div class="kpi-label">Bounce Rate <button class="info-btn" onclick="showKpiInfo('bounce')">ⓘ</button></div>
         <div class="kpi-value" id="kpi-bounce">—</div>
         <div class="kpi-sub">% bounced</div>
       </div>
@@ -1189,5 +1264,43 @@ function fmtN(n) {
   return String(Math.round(n));
 }
 </script>
+
+    <div class="kpi-modal-overlay" id="kpiModal" onclick="hideKpiInfo()">
+      <div class="kpi-modal" onclick="event.stopPropagation()">
+        <button class="kpi-modal-close" onclick="hideKpiInfo()">×</button>
+        <div class="kpi-modal-title" id="kpiModalTitle"></div>
+        <div id="kpiModalBody"></div>
+      </div>
+    </div>
+
+    <script>
+    const KPI_INFO = {
+      'sessions': { title: 'Sessions from Instagram',    def: 'The number of website visits that came from Instagram — people who clicked a link in your bio, story, or post and landed on your site.',                                                                                                                               benchmark: 'There is no universal number, but a rough guide: 1-3% of your Instagram followers clicking through per post is healthy. If you have 5,000 followers and run 4 posts/week, expect roughly 200-600 sessions per month from Instagram.',                                                               action: 'To drive more sessions: add a strong CTA to every caption and story, use link stickers in stories, and keep your link-in-bio updated to your most relevant page. Post timing also affects click-through.' },
+      'revenue':  { title: 'Instagram-Attributed Revenue', def: 'Revenue from orders placed by visitors who arrived via Instagram traffic. This is tracked using UTM parameters or GA4 source/medium attribution.',                                                                                                                     benchmark: 'Instagram typically drives 10-30% of organic revenue for boutiques with an active presence. If you are running paid Instagram ads, this number should significantly exceed your ad spend.',                                                                                                           action: 'If Instagram revenue is low despite good follower counts, the issue is usually either conversion rate (site or product) or session quality (wrong audience clicking through). Check what pages they land on and whether those pages convert.' },
+      'orders':   { title: 'Orders from Instagram',       def: 'Number of completed purchases by visitors who came from Instagram. This reflects the actual conversion behavior of your Instagram audience.',                                                                                                                            benchmark: 'Order volume scales with sessions and CVR. A 1-2% CVR on Instagram traffic is normal. With 500 sessions, expect 5-10 orders at average performance.',                                                                                                                                              action: 'Low orders despite decent sessions = CVR problem. Review what page Instagram traffic lands on, whether it matches what they saw in the post, and how quickly the page loads on mobile.' },
+      'cvr':      { title: 'Conversion Rate',             def: 'The percentage of Instagram-sourced sessions that resulted in a purchase. Calculated as orders divided by sessions. The most important single metric on this dashboard.',                                                                                                 benchmark: 'Average ecommerce CVR is 1-3%. For Instagram traffic specifically, 1-2% is typical. 3%+ is strong. Under 0.5% signals a disconnect between what Instagram visitors expect and what your site delivers.',                                                                                             action: 'To improve CVR: ensure your landing page matches the post that brought them there, reduce friction at checkout, add product reviews, and make sure your site is fast and mobile-optimized. Even 0.5% CVR gains drive significant revenue at scale.' },
+      'aov':      { title: 'Avg Order Value',             def: 'Average revenue per order from Instagram-sourced customers. Knowing this helps you understand what your Instagram audience typically buys and how to improve revenue per visitor.',                                                                                      benchmark: 'Fashion and boutique AOV typically runs $45-$85. If your Instagram AOV is significantly lower than your overall AOV, Instagram visitors may be converting on lower-priced items only.',                                                                                                              action: 'To raise AOV: feature your higher-ticket items in posts and stories, create bundles or outfit pairings, and offer free shipping above a threshold that is slightly above your current AOV.' },
+      'bounce':   { title: 'Bounce Rate',                 def: 'The percentage of Instagram visitors who landed on your site and left without any interaction (no clicks, no scrolling recorded). High bounce rate means people are not engaging with what they find.',                                                               benchmark: 'Under 40% is good. 40-60% is average for social traffic. Over 60% is a concern — it usually means the landing page does not match what the visitor expected based on the post they clicked.',                                                                                                       action: 'If bounce rate is high from Instagram: check whether your link-in-bio points to a relevant page, whether the page loads fast on mobile, and whether there is a clear next step visible above the fold.' },
+    };
+
+    function showKpiInfo(key) {
+      const d = KPI_INFO[key];
+      if (!d) return;
+      document.getElementById('kpiModalTitle').textContent = d.title;
+      document.getElementById('kpiModalBody').innerHTML =
+        '<div class="kpi-modal-section"><div class="kpi-modal-section-label">What it is</div><div class="kpi-modal-section-body">' + d.def + '</div></div>' +
+        '<div class="kpi-modal-section"><div class="kpi-modal-section-label">Industry benchmark</div><div class="kpi-modal-section-body">' + d.benchmark + '</div></div>' +
+        '<div class="kpi-modal-section"><div class="kpi-modal-section-label">What to do</div><div class="kpi-modal-section-body">' + d.action + '</div></div>';
+      document.getElementById('kpiModal').classList.add('open');
+    }
+
+    function hideKpiInfo() {
+      document.getElementById('kpiModal').classList.remove('open');
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') hideKpiInfo();
+    });
+    </script>
 </body>
 </html>
