@@ -1090,7 +1090,7 @@ function render() {
   const campEntries = Object.entries(campMap).sort(([,a],[,b]) => b - a).slice(0, 8);
   renderChart('chart-campaigns', 'bar', campEntries.map(([k]) => k), [
     { label: 'Revenue', data: campEntries.map(([,v]) => +v.toFixed(2)),
-      backgroundColor: campEntries.map((_, i) => SCHEMES[currentScheme].palette[i % SCHEMES[currentScheme].palette.length]),
+      backgroundColor: campEntries.map((_, i) => i === 0 ? SCHEMES[currentScheme].c1 : NEUTRAL_PALETTE[(i - 1) % NEUTRAL_PALETTE.length]),
       borderRadius: 4, borderSkipped: false }
   ], { indexAxis: 'y', x: { title: 'Revenue ($)' } });
 
@@ -1121,7 +1121,7 @@ function render() {
   const contentEntries = Object.entries(contentMap).sort(([,a],[,b]) => b - a).slice(0, 8);
   renderChart('chart-content', 'bar', contentEntries.map(([k]) => k), [
     { label: 'Sessions', data: contentEntries.map(([,v]) => v),
-      backgroundColor: contentEntries.map((_, i) => SCHEMES[currentScheme].palette[i % SCHEMES[currentScheme].palette.length]),
+      backgroundColor: contentEntries.map((_, i) => i === 0 ? SCHEMES[currentScheme].c1 : NEUTRAL_PALETTE[(i - 1) % NEUTRAL_PALETTE.length]),
       borderRadius: 4, borderSkipped: false }
   ], { indexAxis: 'y', x: { title: 'Sessions' }, integerValues: true });
 }
@@ -1142,6 +1142,7 @@ const SCHEMES = {
   rose:    { c1:'#e879f9', c2:'#a855f7', c3:'#818cf8',
     palette:['#e879f9','#a855f7','#818cf8','#f0abfc','#c084fc','#a5b4fc','#f9a8d4','#d8b4fe','#c7d2fe','#ddd6fe'] },
 };
+const NEUTRAL_PALETTE = ['#475569','#64748b','#78909c','#94a3b8','#6b7280','#9ca3af','#b0bec5','#adb5bd'];
 let currentScheme = 'creator';
 
 function hexAlpha(hex, a) {
